@@ -1,9 +1,11 @@
+import About from "./About";
+import Banner from "./Banner";
+
 const Home = () => {
   return (
     <div>
-      <h1 className="text-3xl text-center font-bold mt-10">
-        Welcome to AssetVerse
-      </h1>
+      <Banner />
+      <About />
     </div>
   );
 };

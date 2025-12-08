@@ -2,6 +2,8 @@ import { createBrowserRouter } from "react-router-dom";
 import MainLayout from "../Layout/MainLayout";
 import Home from "../Pages/Home/Home";
 import ErrorPage from "../Pages/ErrorPage/ErrorPage";
+import Login from "../Pages/Login/Login";
+import JoinEmployee from "../Pages/Register/JoinEmployee";
 
 const router = createBrowserRouter([
   {
@@ -15,7 +17,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/join-employee",
-        element: <div>Join Employee Page</div>,
+        element: <JoinEmployee />,
       },
       {
         path: "/join-hr",
@@ -23,7 +25,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/login",
-        element: <div>Login Page</div>,
+        element: <Login />,
       },
     ],
   },

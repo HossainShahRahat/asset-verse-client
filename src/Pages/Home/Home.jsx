@@ -5,16 +5,10 @@ import Packages from "./Packages";
 import Testimonials from "./Testimonials";
 import HowItWorks from "./HowItWorks";
 import FaqSection from "./FaqSection";
-import { Helmet } from "react-helmet";
 
 const Home = () => {
   return (
     <div>
-      {/* Added Helmet for page title if you have react-helmet installed, otherwise remove */}
-      <Helmet>
-        <title>AssetVerse | Home</title>
-      </Helmet>
-
       <Banner />
       <About />
       <HowItWorks />

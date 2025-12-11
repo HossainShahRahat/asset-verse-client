@@ -1,124 +1,173 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
+import { AuthContext } from "../../../Providers/AuthProvider";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 const AllRequests = () => {
-  const [allRequests, setAllRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useContext(AuthContext);
+  const [items, setItems] = useState([]);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/requests")
-      .then((res) => {
-        setAllRequests(res.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.log(error);
-        setLoading(false);
-      });
-  }, []);
+    if (user?.email) {
+      axios
+        .get(
+          `http://localhost:5000/requests?email=${user.email}&search=${search}&page=${page}&limit=10`,
+          {
+            headers: {
+              authorization: `Bearer ${localStorage.getItem("access-token")}`,
+            },
+          }
+        )
+        .then((res) => {
+          setItems(res.data);
+        });
+    }
+  }, [user, search, page]);
 
-  const handleApprove = (id) => {
+  const approve = (req) => {
+    const info = {
+      status: "approved",
+      assetId: req.assetId,
+      requesterEmail: req.requesterEmail,
+      requesterName: req.requesterName,
+      hrEmail: user.email,
+      companyName: user.companyName,
+      companyLogo: user.companyLogo,
+    };
+
     axios
-      .patch(`http://localhost:5000/requests/${id}`, { status: "approved" })
+      .patch(`http://localhost:5000/requests/${req._id}`, info, {
+        headers: {
+          authorization: `Bearer ${localStorage.getItem("access-token")}`,
+        },
+      })
       .then((res) => {
+        if (res.data.message === "limit reached") {
+          Swal.fire({
+            title: "Limit Reached",
+            text: "Please upgrade your package to add more employees.",
+            icon: "warning",
+            confirmButtonText: "Upgrade Now",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              navigate("/upgrade-package");
+            }
+          });
+          return;
+        }
+
         if (res.data.modifiedCount > 0) {
-          Swal.fire("Success", "Request approved successfully", "success");
-          const remaining = allRequests.filter((req) => req._id !== id);
-          const updated = allRequests.find((req) => req._id === id);
+          Swal.fire("Success", "Request approved", "success");
+          const remaining = items.filter((item) => item._id !== req._id);
+          const updated = items.find((item) => item._id === req._id);
           updated.status = "approved";
-          setAllRequests([updated, ...remaining]);
+          setItems([updated, ...remaining]);
         }
       });
   };
 
-  const handleReject = (id) => {
+  const reject = (id) => {
     Swal.fire({
-      title: "Reject Request?",
-      text: "You won't be able to revert this!",
+      title: "Reject?",
+      text: "You cannot undo this",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, reject it!",
+      confirmButtonText: "Yes, reject",
     }).then((result) => {
       if (result.isConfirmed) {
         axios
-          .patch(`http://localhost:5000/requests/${id}`, { status: "rejected" })
+          .patch(
+            `http://localhost:5000/requests/${id}`,
+            { status: "rejected" },
+            {
+              headers: {
+                authorization: `Bearer ${localStorage.getItem("access-token")}`,
+              },
+            }
+          )
           .then((res) => {
             if (res.data.modifiedCount > 0) {
-              Swal.fire(
-                "Rejected!",
-                "The request has been rejected.",
-                "success"
-              );
-              const remaining = allRequests.filter((req) => req._id !== id);
-              const updated = allRequests.find((req) => req._id === id);
+              Swal.fire("Rejected", "Request has been rejected", "success");
+              const remaining = items.filter((item) => item._id !== id);
+              const updated = items.find((item) => item._id === id);
               updated.status = "rejected";
-              setAllRequests([updated, ...remaining]);
+              setItems([updated, ...remaining]);
             }
           });
       }
     });
   };
 
-  if (loading) {
-    return <div className="p-10 text-center">Loading requests...</div>;
-  }
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const text = e.target.search.value;
+    setSearch(text);
+    setPage(0);
+  };
 
   return (
-    <div className="p-10 bg-gray-50 min-h-screen">
-      <h2 className="text-3xl font-bold mb-6 text-gray-800">Asset Requests</h2>
+    <div className="p-10 bg-base-200 min-h-screen">
+      <h2 className="text-3xl font-bold mb-6">All Requests</h2>
 
-      <div className="overflow-x-auto bg-white rounded-lg shadow">
+      <div className="mb-6">
+        <form onSubmit={handleSearch} className="join">
+          <input
+            type="text"
+            name="search"
+            placeholder="Search by name or email"
+            className="input input-bordered join-item w-80"
+          />
+          <button className="btn btn-primary join-item">Search</button>
+        </form>
+      </div>
+
+      <div className="overflow-x-auto bg-base-100 shadow-xl rounded-xl">
         <table className="table w-full">
-          <thead className="bg-gray-100 text-gray-600">
+          <thead className="bg-neutral text-neutral-content">
             <tr>
-              <th>Asset Name</th>
-              <th>Asset Type</th>
-              <th>Requester Email</th>
-              <th>Requester Name</th>
-              <th>Request Date</th>
+              <th>Asset</th>
+              <th>Type</th>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Date</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            {allRequests.map((request) => (
-              <tr key={request._id} className="hover:bg-gray-50 border-b">
-                <td className="font-medium">{request.assetName}</td>
-                <td>{request.assetType}</td>
-                <td>{request.requesterEmail}</td>
-                <td>{request.requesterName}</td>
-                <td>{new Date(request.requestDate).toLocaleDateString()}</td>
+            {items.map((item) => (
+              <tr key={item._id} className="hover">
+                <td className="font-bold">{item.assetName}</td>
+                <td>{item.assetType}</td>
+                <td>{item.requesterEmail}</td>
+                <td>{item.requesterName}</td>
+                <td>{new Date(item.requestDate).toLocaleDateString()}</td>
                 <td>
-                  {request.status === "pending" ? (
-                    <span className="badge badge-warning text-white">
-                      Pending
-                    </span>
-                  ) : request.status === "approved" ? (
-                    <span className="badge badge-success text-white">
-                      Approved
-                    </span>
+                  {item.status === "pending" ? (
+                    <span className="badge badge-warning">Pending</span>
+                  ) : item.status === "approved" ? (
+                    <span className="badge badge-success">Approved</span>
                   ) : (
-                    <span className="badge badge-error text-white">
-                      Rejected
-                    </span>
+                    <span className="badge badge-error">Rejected</span>
                   )}
                 </td>
                 <td>
-                  {request.status === "pending" && (
+                  {item.status === "pending" && (
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleApprove(request._id)}
-                        className="btn btn-sm btn-success text-white"
+                        onClick={() => approve(item)}
+                        className="btn btn-xs btn-success text-white"
                       >
                         Approve
                       </button>
                       <button
-                        onClick={() => handleReject(request._id)}
-                        className="btn btn-sm btn-error text-white"
+                        onClick={() => reject(item._id)}
+                        className="btn btn-xs btn-error text-white"
                       >
                         Reject
                       </button>
@@ -127,15 +176,25 @@ const AllRequests = () => {
                 </td>
               </tr>
             ))}
-            {allRequests.length === 0 && (
-              <tr>
-                <td colSpan="7" className="text-center py-8 text-gray-500">
-                  No requests found.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex justify-center mt-8 join">
+        <button
+          onClick={() => setPage(page > 0 ? page - 1 : 0)}
+          className="join-item btn"
+        >
+          «
+        </button>
+        <button className="join-item btn">Page {page + 1}</button>
+        <button
+          onClick={() => setPage(page + 1)}
+          className="join-item btn"
+          disabled={items.length < 10}
+        >
+          »
+        </button>
       </div>
     </div>
   );

@@ -8,38 +8,41 @@ const AddAsset = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleAdd = async (event) => {
-    event.preventDefault();
-    const form = event.target;
-
-    const productName = form.productName.value;
-    const quantity = parseInt(form.quantity.value);
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const name = form.name.value;
     const type = form.type.value;
+    const quantity = parseInt(form.quantity.value);
     const image = form.image.value;
 
     const info = {
-      productName: productName,
-      productQuantity: quantity,
+      productName: name,
       productType: type,
-      productImage: image,
+      productQuantity: quantity,
       availableQuantity: quantity,
+      productImage: image,
       dateAdded: new Date(),
       hrEmail: user?.email,
       companyName: user?.companyName,
     };
 
     try {
-      await axios.post("http://localhost:5000/assets", info);
+      await axios.post("http://localhost:5000/assets", info, {
+        headers: {
+          authorization: `Bearer ${localStorage.getItem("access-token")}`,
+        },
+      });
 
       Swal.fire({
         title: "Success",
-        text: "Item added to the list",
+        text: "Item added successfully",
         icon: "success",
         confirmButtonText: "Ok",
       });
       navigate("/asset-list");
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      console.log(error);
       Swal.fire({
         title: "Error",
         text: "Something went wrong",
@@ -52,24 +55,24 @@ const AddAsset = () => {
     <div className="flex justify-center items-center min-h-screen bg-base-200 p-10">
       <div className="card w-full max-w-lg bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="text-2xl font-bold text-center mb-4">Add New Asset</h2>
+          <h2 className="text-2xl font-bold text-center mb-6">Add New Asset</h2>
 
           <form onSubmit={handleAdd}>
-            <div className="form-control w-full mb-3">
+            <div className="form-control w-full mb-4">
               <label className="label">
                 <span className="label-text">Product Name</span>
               </label>
               <input
                 type="text"
-                name="productName"
+                name="name"
                 className="input input-bordered w-full"
                 required
               />
             </div>
 
-            <div className="form-control w-full mb-3">
+            <div className="form-control w-full mb-4">
               <label className="label">
-                <span className="label-text">Product Image</span>
+                <span className="label-text">Product Image URL</span>
               </label>
               <input
                 type="url"
@@ -79,7 +82,7 @@ const AddAsset = () => {
               />
             </div>
 
-            <div className="flex gap-4 mb-3">
+            <div className="flex gap-4 mb-4">
               <div className="form-control w-1/2">
                 <label className="label">
                   <span className="label-text">Type</span>

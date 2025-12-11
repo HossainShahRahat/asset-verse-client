@@ -13,22 +13,28 @@ const AssetList = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.email) {
-      setLoading(true);
-      axios
-        .get(
-          `http://localhost:5000/assets?email=${user.email}&search=${search}&sort=${sort}&page=${page}&limit=10`,
-          {
-            headers: {
-              authorization: `Bearer ${localStorage.getItem("access-token")}`,
-            },
-          }
-        )
-        .then((res) => {
+    const fetchAssets = async () => {
+      if (user?.email) {
+        setLoading(true);
+        try {
+          const res = await axios.get(
+            `http://localhost:5000/assets?email=${user.email}&search=${search}&sort=${sort}&page=${page}&limit=10`,
+            {
+              headers: {
+                authorization: `Bearer ${localStorage.getItem("access-token")}`,
+              },
+            }
+          );
           setItems(res.data);
+        } catch (error) {
+          console.log(error);
+        } finally {
           setLoading(false);
-        });
-    }
+        }
+      }
+    };
+
+    fetchAssets();
   }, [user, search, sort, page]);
 
   const remove = (id) => {

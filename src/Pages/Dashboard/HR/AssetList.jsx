@@ -13,7 +13,7 @@ const AssetList = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAssets = async () => {
+    const getData = async () => {
       if (user?.email) {
         setLoading(true);
         try {
@@ -26,15 +26,14 @@ const AssetList = () => {
             }
           );
           setItems(res.data);
+          setLoading(false);
         } catch (error) {
           console.log(error);
-        } finally {
           setLoading(false);
         }
       }
     };
-
-    fetchAssets();
+    getData();
   }, [user, search, sort, page]);
 
   const remove = (id) => {

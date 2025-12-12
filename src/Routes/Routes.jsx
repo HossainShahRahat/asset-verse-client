@@ -11,6 +11,9 @@ import MyAssets from "../Pages/Dashboard/Employee/MyAssets";
 import MyTeam from "../Pages/Dashboard/Employee/MyTeam";
 import RequestAsset from "../Pages/Dashboard/Employee/RequestAsset";
 import Profile from "../Pages/Profile/Profile";
+import AdminRoute from "./AdminRoute";
+import EmployeeRoute from "./EmployeeRoute";
+import PrivateRoute from "./PrivateRoute";
 
 const router = createBrowserRouter([
   {
@@ -36,27 +39,51 @@ const router = createBrowserRouter([
       },
       {
         path: "/asset-list",
-        element: <AssetList />,
+        element: (
+          <AdminRoute>
+            <AssetList />
+          </AdminRoute>
+        ),
       },
       {
         path: "/add-asset",
-        element: <AddAsset />,
+        element: (
+          <AdminRoute>
+            <AddAsset />
+          </AdminRoute>
+        ),
       },
       {
         path: "/my-assets",
-        element: <MyAssets />,
+        element: (
+          <EmployeeRoute>
+            <MyAssets />
+          </EmployeeRoute>
+        ),
       },
       {
         path: "/my-team",
-        element: <MyTeam />,
+        element: (
+          <EmployeeRoute>
+            <MyTeam />
+          </EmployeeRoute>
+        ),
       },
       {
         path: "/request-asset",
-        element: <RequestAsset />,
+        element: (
+          <EmployeeRoute>
+            <RequestAsset />
+          </EmployeeRoute>
+        ),
       },
       {
         path: "/profile",
-        element: <Profile />,
+        element: (
+          <PrivateRoute>
+            <Profile />
+          </PrivateRoute>
+        ),
       },
     ],
   },

@@ -3,7 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../Providers/AuthProvider";
 import useRole from "../Hooks/useRole";
 
-const AdminRoute = ({ children }) => {
+const EmployeeRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
   const [role, roleLoading] = useRole();
   const location = useLocation();
@@ -16,11 +16,11 @@ const AdminRoute = ({ children }) => {
     );
   }
 
-  if (user && role === "hr") {
+  if (user && role === "employee") {
     return children;
   }
 
   return <Navigate to="/" state={{ from: location }} replace />;
 };
 
-export default AdminRoute;
+export default EmployeeRoute;

@@ -100,7 +100,7 @@ const Navbar = () => {
         </Link>
       </div>
       <div className="navbar-center hidden lg:flex">
-        <ul className="menu menu-horizontal px-1">{navOptions}</ul>
+        <ul className="menu menu-horizontal gap-4">{navOptions}</ul>
       </div>
       <div className="navbar-end">
         {user ? (

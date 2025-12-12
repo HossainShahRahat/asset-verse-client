@@ -1,68 +1,79 @@
-import { useEffect, useState, useContext } from "react";
-import { AuthContext } from "../../../Providers/AuthProvider";
+import { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { FaSearch } from "react-icons/fa";
+import { AuthContext } from "../../../Providers/AuthProvider";
+import { FaSearch, FaFilter } from "react-icons/fa";
 
 const RequestAsset = () => {
   const { user } = useContext(AuthContext);
-  const [items, setItems] = useState([]);
+  const [assets, setAssets] = useState([]);
+  const [myRequests, setMyRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [active, setActive] = useState(null);
 
   useEffect(() => {
-    const getAssets = async () => {
-      setLoading(true);
+    const getData = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/assets?search=${search}`,
-          {
+        const [assetsRes, requestsRes] = await Promise.all([
+          axios.get(`http://localhost:5000/assets?search=${search}`, {
             headers: {
               authorization: `Bearer ${localStorage.getItem("access-token")}`,
             },
-          }
+          }),
+          axios.get(`http://localhost:5000/requests?email=${user.email}`, {
+            headers: {
+              authorization: `Bearer ${localStorage.getItem("access-token")}`,
+            },
+          }),
+        ]);
+
+        const availableAssets = assetsRes.data.filter(
+          (item) => item.productQuantity > 0
         );
-        setItems(res.data);
+        setAssets(availableAssets);
+
+        const requestedAssetIds = requestsRes.data.map((req) => req.assetId);
+        setMyRequests(requestedAssetIds);
+
         setLoading(false);
       } catch (error) {
         console.log(error);
         setLoading(false);
       }
     };
-    getAssets();
-  }, [search]);
+    if (user?.email) {
+      getData();
+    }
+  }, [search, user?.email]);
 
-  const submitRequest = async (e) => {
-    e.preventDefault();
-    const note = e.target.note.value;
-
-    const info = {
-      assetId: active._id,
-      assetName: active.productName,
-      assetType: active.productType,
-      requesterName: user.displayName,
+  const handleRequest = (asset) => {
+    const requestInfo = {
+      assetId: asset._id,
+      assetName: asset.productName,
+      assetType: asset.productType,
       requesterEmail: user.email,
-      hrEmail: active.hrEmail,
+      requesterName: user.displayName,
       requestDate: new Date(),
-      note: note,
       status: "pending",
     };
 
-    try {
-      await axios.post("http://localhost:5000/requests", info, {
+    axios
+      .post("http://localhost:5000/requests", requestInfo, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("access-token")}`,
         },
+      })
+      .then((res) => {
+        if (res.data.insertedId) {
+          Swal.fire("Success", "Asset requested successfully!", "success");
+          setMyRequests([...myRequests, asset._id]);
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        Swal.fire("Error", "Could not request asset.", "error");
       });
-
-      Swal.fire("Success", "Request sent", "success");
-      setActive(null);
-    } catch (error) {
-      console.log(error);
-      Swal.fire("Error", "Failed to send request", "error");
-    }
   };
 
   const handleSearch = (e) => {
@@ -70,106 +81,111 @@ const RequestAsset = () => {
     setSearch(e.target.search.value);
   };
 
-  const filteredItems = items.filter((item) => {
-    if (filter === "available") return item.availableQuantity > 0;
-    if (filter === "stock_out") return item.availableQuantity === 0;
-    return true;
-  });
-
   return (
-    <div className="p-10 bg-base-200 min-h-screen">
-      <h2 className="text-3xl font-bold mb-6">Request Assets</h2>
-
+    <div className="p-4 md:p-10 bg-base-200 min-h-screen text-base-content">
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <h2 className="text-3xl font-bold">Request Assets</h2>
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-base-100 p-4 rounded-xl shadow-sm">
         <form onSubmit={handleSearch} className="join w-full md:w-auto">
           <input
             type="text"
             name="search"
-            placeholder="Search..."
-            className="input input-bordered join-item w-full md:w-80"
+            placeholder="Search assets..."
+            className="input input-bordered join-item w-full md:w-64"
           />
-          <button className="btn btn-primary join-item">
+          <button className="btn btn-neutral join-item">
             <FaSearch />
           </button>
         </form>
 
-        <select
-          onChange={(e) => setFilter(e.target.value)}
-          className="select select-bordered w-full md:w-auto"
-        >
-          <option value="">Filter by Status</option>
-          <option value="available">Available</option>
-          <option value="stock_out">Out of Stock</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <FaFilter className="text-gray-500" />
+          <select
+            onChange={(e) => setFilter(e.target.value)}
+            className="select select-bordered"
+          >
+            <option value="">All Types</option>
+            <option value="Returnable">Returnable</option>
+            <option value="Non-Returnable">Non-Returnable</option>
+          </select>
+        </div>
       </div>
 
-      {loading ? (
-        <div className="text-center">Loading...</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => (
-            <div key={item._id} className="card bg-base-100 shadow-xl">
-              <figure className="px-10 pt-10">
-                <img
-                  src={item.productImage}
-                  alt="asset"
-                  className="rounded-xl h-48 object-cover"
-                />
-              </figure>
-              <div className="card-body items-center text-center">
-                <h2 className="card-title">{item.productName}</h2>
-                <p>Type: {item.productType}</p>
-                <p
-                  className={`font-bold ${
-                    item.availableQuantity === 0
-                      ? "text-red-500"
-                      : "text-green-500"
-                  }`}
-                >
-                  {item.availableQuantity > 0 ? "Available" : "Out of Stock"}
-                </p>
-                <div className="card-actions">
-                  <button
-                    className="btn btn-primary"
-                    disabled={item.availableQuantity === 0}
-                    onClick={() => setActive(item)}
-                  >
-                    Request
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {active && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg">Request {active.productName}</h3>
-            <p className="py-4">Add a note for the HR.</p>
-
-            <form onSubmit={submitRequest}>
-              <textarea
-                name="note"
-                className="textarea textarea-bordered w-full mb-4"
-                placeholder="Reason..."
-              ></textarea>
-
-              <div className="modal-action">
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => setActive(null)}
-                >
-                  Cancel
-                </button>
-                <button className="btn btn-primary">Send</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <div className="overflow-x-auto bg-base-100 shadow-xl rounded-xl">
+        <table className="table w-full">
+          <thead className="bg-neutral text-neutral-content">
+            <tr>
+              <th>Asset Name</th>
+              <th>Type</th>
+              <th>Availability</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="4" className="text-center p-4">
+                  Loading assets...
+                </td>
+              </tr>
+            ) : assets.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="text-center p-4">
+                  No assets available to request.
+                </td>
+              </tr>
+            ) : (
+              assets
+                .filter((item) => (filter ? item.productType === filter : true))
+                .map((item) => {
+                  const isAlreadyRequested = myRequests.includes(item._id);
+                  return (
+                    <tr key={item._id} className="hover">
+                      <td className="font-bold text-lg">{item.productName}</td>
+                      <td>
+                        <span
+                          className={`badge ${
+                            item.productType === "Returnable"
+                              ? "badge-primary"
+                              : "badge-secondary"
+                          } badge-outline`}
+                        >
+                          {item.productType}
+                        </span>
+                      </td>
+                      <td>
+                        <div
+                          className={`badge ${
+                            item.productQuantity > 0
+                              ? "badge-accent"
+                              : "badge-error"
+                          } gap-2`}
+                        >
+                          {item.productQuantity > 0
+                            ? "In Stock"
+                            : "Out of Stock"}
+                        </div>
+                      </td>
+                      <td>
+                        <button
+                          onClick={() => handleRequest(item)}
+                          className="btn btn-sm btn-primary"
+                          disabled={
+                            item.productQuantity === 0 || isAlreadyRequested
+                          }
+                        >
+                          {isAlreadyRequested ? "Requested" : "Request"}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

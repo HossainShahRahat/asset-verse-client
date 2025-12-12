@@ -5,15 +5,20 @@ import ErrorPage from "../Pages/ErrorPage/ErrorPage";
 import Login from "../Pages/Login/Login";
 import JoinEmployee from "../Pages/Register/JoinEmployee";
 import JoinHR from "../Pages/Register/JoinHR";
-import AssetList from "../Pages/Dashboard/HR/AssetList";
+import HRDashboard from "../Pages/Dashboard/HR/HRDashboard";
 import AddAsset from "../Pages/Dashboard/HR/AddAsset";
+import AllRequests from "../Pages/Dashboard/HR/AllRequests";
+import MyEmployeeList from "../Pages/Dashboard/HR/MyEmployeeList";
 import MyAssets from "../Pages/Dashboard/Employee/MyAssets";
 import MyTeam from "../Pages/Dashboard/Employee/MyTeam";
 import RequestAsset from "../Pages/Dashboard/Employee/RequestAsset";
 import Profile from "../Pages/Profile/Profile";
+import Subscription from "../Pages/Subscription/Subscription";
+import Payment from "../Pages/Payment/Payment";
 import AdminRoute from "./AdminRoute";
 import EmployeeRoute from "./EmployeeRoute";
 import PrivateRoute from "./PrivateRoute";
+import PublicRoute from "./PublicRoute";
 
 const router = createBrowserRouter([
   {
@@ -23,25 +28,41 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <Home />,
+        element: (
+          <PublicRoute>
+            <Home />
+          </PublicRoute>
+        ),
       },
       {
         path: "/join-employee",
-        element: <JoinEmployee />,
+        element: (
+          <PublicRoute>
+            <JoinEmployee />
+          </PublicRoute>
+        ),
       },
       {
         path: "/join-hr",
-        element: <JoinHR />,
+        element: (
+          <PublicRoute>
+            <JoinHR />
+          </PublicRoute>
+        ),
       },
       {
         path: "/login",
-        element: <Login />,
+        element: (
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        ),
       },
       {
         path: "/asset-list",
         element: (
           <AdminRoute>
-            <AssetList />
+            <HRDashboard />
           </AdminRoute>
         ),
       },
@@ -50,6 +71,38 @@ const router = createBrowserRouter([
         element: (
           <AdminRoute>
             <AddAsset />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "/all-requests",
+        element: (
+          <AdminRoute>
+            <AllRequests />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "/employee-list",
+        element: (
+          <AdminRoute>
+            <MyEmployeeList />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "/subscription",
+        element: (
+          <AdminRoute>
+            <Subscription />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "/payment",
+        element: (
+          <AdminRoute>
+            <Payment />
           </AdminRoute>
         ),
       },

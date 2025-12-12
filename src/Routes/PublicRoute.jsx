@@ -1,12 +1,11 @@
 import { useContext } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { AuthContext } from "../Providers/AuthProvider";
 import useRole from "../Hooks/useUserStatus";
 
-const EmployeeRoute = ({ children }) => {
+const PublicRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
   const [role, roleLoading] = useRole();
-  const location = useLocation();
 
   if (loading || roleLoading) {
     return (
@@ -16,11 +15,14 @@ const EmployeeRoute = ({ children }) => {
     );
   }
 
-  if (user && role === "employee") {
-    return children;
+  if (user) {
+    if (role === "hr") {
+      return <Navigate to="/asset-list" replace />;
+    }
+    return <Navigate to="/my-assets" replace />;
   }
 
-  return <Navigate to="/" state={{ from: location }} replace />;
+  return children;
 };
 
-export default EmployeeRoute;
+export default PublicRoute;

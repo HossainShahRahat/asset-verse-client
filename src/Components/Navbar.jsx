@@ -1,11 +1,11 @@
 import { useContext } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { AuthContext } from "../Providers/AuthProvider";
-import useRole from "../Hooks/useRole";
+import useUserStatus from "../Hooks/useUserStatus";
 
 const Navbar = () => {
   const { user, logOut } = useContext(AuthContext);
-  const [role] = useRole();
+  const [role, roleLoading, status] = useUserStatus();
 
   const handleLogOut = () => {
     logOut()
@@ -13,11 +13,20 @@ const Navbar = () => {
       .catch((error) => console.log(error));
   };
 
+  const getHomeLink = () => {
+    if (!user) return "/";
+    if (role === "hr") return "/asset-list";
+    if (role === "employee") return "/my-assets";
+    return "/";
+  };
+
   const navOptions = (
     <>
-      <li>
-        <NavLink to="/">Home</NavLink>
-      </li>
+      {!user && (
+        <li>
+          <NavLink to="/">Home</NavLink>
+        </li>
+      )}
 
       {!user && (
         <>
@@ -33,10 +42,19 @@ const Navbar = () => {
       {user && role === "hr" && (
         <>
           <li>
-            <NavLink to="/asset-list">HR Dashboard</NavLink>
+            <NavLink to="/asset-list">Dashboard</NavLink>
           </li>
           <li>
             <NavLink to="/add-asset">Add Asset</NavLink>
+          </li>
+          <li>
+            <NavLink to="/all-requests">All Requests</NavLink>
+          </li>
+          <li>
+            <NavLink to="/employee-list">Employee List</NavLink>
+          </li>
+          <li>
+            <NavLink to="/subscription">Subscription</NavLink>
           </li>
           <li>
             <NavLink to="/profile">Profile</NavLink>
@@ -90,9 +108,9 @@ const Navbar = () => {
             {navOptions}
           </ul>
         </div>
-        <Link to="/" className="btn btn-ghost normal-case text-xl">
+        <Link to={getHomeLink()} className="btn btn-ghost normal-case text-xl">
           <img
-            src="https://i.ibb.co/Vvz1d7q/logo.png"
+            src="https://img.icons8.com/color/48/company.png"
             alt="logo"
             className="w-8 h-8 mr-2"
           />
@@ -103,12 +121,19 @@ const Navbar = () => {
         <ul className="menu menu-horizontal gap-4">{navOptions}</ul>
       </div>
       <div className="navbar-end">
+        {user && role === "hr" && status.type === "Premium" && (
+          <div className="badge badge-lg badge-accent text-white font-semibold mr-3">
+            {status.type}
+          </div>
+        )}
         {user ? (
           <div className="dropdown dropdown-end">
             <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
               <div className="w-10 rounded-full">
                 <img
-                  src={user.photoURL || "https://i.ibb.co/mJRkLW9/avatar.png"}
+                  src={
+                    user.photoURL || "https://img.icons8.com/color/48/user.png"
+                  }
                   alt="profile"
                 />
               </div>

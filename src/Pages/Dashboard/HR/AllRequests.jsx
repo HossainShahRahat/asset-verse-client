@@ -1,201 +1,268 @@
-import { useEffect, useState, useContext } from "react";
-import { AuthContext } from "../../../Providers/AuthProvider";
+import { useState, useEffect, useContext } from "react";
 import axios from "axios";
+import { AuthContext } from "../../../Providers/AuthProvider";
 import Swal from "sweetalert2";
-import { useNavigate } from "react-router-dom";
 
 const AllRequests = () => {
   const { user } = useContext(AuthContext);
-  const [items, setItems] = useState([]);
-  const [search, setSearch] = useState("");
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
-  const navigate = useNavigate();
+  const limit = 10;
+  const [totalPages, setTotalPages] = useState(0);
+
+  const fetchRequests = async () => {
+    if (!user?.email) return;
+
+    try {
+      setLoading(true);
+
+      const res = await axios.get(
+        `http://localhost:5000/hr-requests/${user.email}`,
+        {
+          headers: {
+            authorization: `Bearer ${localStorage.getItem("access-token")}`,
+          },
+        }
+      );
+
+      setRequests(res.data);
+      setLoading(false);
+
+      setTotalPages(Math.ceil(res.data.length / limit));
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (user?.email) {
-      axios
-        .get(
-          `http://localhost:5000/requests?email=${user.email}&search=${search}&page=${page}&limit=10`,
-          {
+    fetchRequests();
+  }, [user, page]);
+
+  const handleAction = (id, action) => {
+    Swal.fire({
+      title: `Confirm ${action}?`,
+      text: `Are you sure you want to ${action} this request?`,
+      icon: action === "approve" ? "question" : "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: `Yes, ${action} it!`,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const requestToUpdate = requests.find((r) => r._id === id);
+        if (!requestToUpdate) return;
+
+        const updateData = {
+          status: action,
+          assetId: requestToUpdate.assetId,
+          requesterEmail: requestToUpdate.requesterEmail,
+          requesterName: requestToUpdate.requesterName,
+          hrEmail: requestToUpdate.hrEmail,
+          companyName: requestToUpdate.companyName,
+          companyLogo: requestToUpdate.companyLogo,
+        };
+
+        axios
+          .patch(`http://localhost:5000/requests/${id}`, updateData, {
             headers: {
               authorization: `Bearer ${localStorage.getItem("access-token")}`,
             },
-          }
-        )
-        .then((res) => {
-          setItems(res.data);
-        });
-    }
-  }, [user, search, page]);
-
-  const approve = (req) => {
-    const info = {
-      status: "approved",
-      assetId: req.assetId,
-      requesterEmail: req.requesterEmail,
-      requesterName: req.requesterName,
-      hrEmail: user.email,
-      companyName: user.companyName,
-      companyLogo: user.companyLogo,
-    };
-
-    axios
-      .patch(`http://localhost:5000/requests/${req._id}`, info, {
-        headers: {
-          authorization: `Bearer ${localStorage.getItem("access-token")}`,
-        },
-      })
-      .then((res) => {
-        if (res.data.message === "limit reached") {
-          Swal.fire({
-            title: "Limit Reached",
-            text: "Please upgrade your package to add more employees.",
-            icon: "warning",
-            confirmButtonText: "Upgrade Now",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              navigate("/upgrade-package");
-            }
-          });
-          return;
-        }
-
-        if (res.data.modifiedCount > 0) {
-          Swal.fire("Success", "Request approved", "success");
-          const remaining = items.filter((item) => item._id !== req._id);
-          const updated = items.find((item) => item._id === req._id);
-          updated.status = "approved";
-          setItems([updated, ...remaining]);
-        }
-      });
-  };
-
-  const reject = (id) => {
-    Swal.fire({
-      title: "Reject?",
-      text: "You cannot undo this",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      confirmButtonText: "Yes, reject",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        axios
-          .patch(
-            `http://localhost:5000/requests/${id}`,
-            { status: "rejected" },
-            {
-              headers: {
-                authorization: `Bearer ${localStorage.getItem("access-token")}`,
-              },
-            }
-          )
+          })
           .then((res) => {
             if (res.data.modifiedCount > 0) {
-              Swal.fire("Rejected", "Request has been rejected", "success");
-              const remaining = items.filter((item) => item._id !== id);
-              const updated = items.find((item) => item._id === id);
-              updated.status = "rejected";
-              setItems([updated, ...remaining]);
+              Swal.fire(
+                `${action}d!`,
+                `The request has been successfully ${action}d.`,
+                "success"
+              );
+              fetchRequests();
+            } else if (res.data.message === "limit reached") {
+              Swal.fire(
+                "Limit Reached",
+                "You cannot approve this request because your employee limit has been reached.",
+                "error"
+              );
+            } else if (
+              res.data.message === "Forbidden: You do not own this request."
+            ) {
+              Swal.fire(
+                "Forbidden",
+                "You are not authorized to manage this request.",
+                "error"
+              );
+            } else {
+              Swal.fire("Error", "Failed to update request status.", "error");
             }
+          })
+          .catch((error) => {
+            console.error(error);
+            Swal.fire("Error", "An error occurred during the update.", "error");
           });
       }
     });
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    const text = e.target.search.value;
-    setSearch(text);
-    setPage(0);
+  const filteredRequests = requests.filter(
+    (request) =>
+      request.requesterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.assetName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const displayedRequests = filteredRequests.slice(
+    page * limit,
+    (page + 1) * limit
+  );
+  const currentPageRequestsCount = displayedRequests.length;
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "pending":
+        return <span className="badge badge-warning text-black">Pending</span>;
+      case "approved":
+        return <span className="badge badge-success text-white">Approved</span>;
+      case "rejected":
+        return <span className="badge badge-error text-white">Rejected</span>;
+      default:
+        return <span className="badge badge-neutral">Unknown</span>;
+    }
   };
 
   return (
-    <div className="p-10 bg-base-200 min-h-screen">
-      <h2 className="text-3xl font-bold mb-6">All Requests</h2>
+    <div className="p-10 bg-base-200 min-h-screen text-base-content">
+      <h2 className="text-3xl font-bold mb-8">
+        All Asset Requests ({requests.length})
+      </h2>
 
-      <div className="mb-6">
-        <form onSubmit={handleSearch} className="join">
+      <div className="flex justify-between items-center mb-6">
+        <div className="form-control w-full max-w-xs">
           <input
             type="text"
-            name="search"
-            placeholder="Search by name or email"
-            className="input input-bordered join-item w-80"
+            placeholder="Search by name or asset"
+            className="input input-bordered w-full"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button className="btn btn-primary join-item">Search</button>
-        </form>
+        </div>
       </div>
 
       <div className="overflow-x-auto bg-base-100 shadow-xl rounded-xl">
         <table className="table w-full">
           <thead className="bg-neutral text-neutral-content">
             <tr>
-              <th>Asset</th>
+              <th>Asset Name</th>
               <th>Type</th>
-              <th>Email</th>
-              <th>Name</th>
-              <th>Date</th>
+              <th>Requester Email</th>
+              <th>Requester Name</th>
+              <th>Request Date</th>
               <th>Status</th>
-              <th>Action</th>
+              <th className="text-center">Action</th>
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => (
-              <tr key={item._id} className="hover">
-                <td className="font-bold">{item.assetName}</td>
-                <td>{item.assetType}</td>
-                <td>{item.requesterEmail}</td>
-                <td>{item.requesterName}</td>
-                <td>{new Date(item.requestDate).toLocaleDateString()}</td>
-                <td>
-                  {item.status === "pending" ? (
-                    <span className="badge badge-warning">Pending</span>
-                  ) : item.status === "approved" ? (
-                    <span className="badge badge-success">Approved</span>
-                  ) : (
-                    <span className="badge badge-error">Rejected</span>
-                  )}
-                </td>
-                <td>
-                  {item.status === "pending" && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => approve(item)}
-                        className="btn btn-xs btn-success text-white"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => reject(item._id)}
-                        className="btn btn-xs btn-error text-white"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  )}
+            {loading ? (
+              <tr>
+                <td colSpan="7" className="text-center p-8">
+                  <span className="loading loading-spinner loading-lg text-primary"></span>
                 </td>
               </tr>
-            ))}
+            ) : filteredRequests.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="text-center p-8">
+                  No requests found for your company.
+                </td>
+              </tr>
+            ) : (
+              displayedRequests.map((request) => (
+                <tr key={request._id} className="hover">
+                  <td className="font-bold">{request.assetName}</td>
+                  <td>
+                    <span
+                      className={`badge ${
+                        request.productType === "Returnable"
+                          ? "badge-info"
+                          : "badge-secondary"
+                      } text-white`}
+                    >
+                      {request.productType}
+                    </span>
+                  </td>
+                  <td>{request.requesterEmail}</td>
+                  <td>{request.requesterName}</td>
+                  <td>{new Date(request.requestDate).toLocaleDateString()}</td>
+                  <td>{getStatusBadge(request.status)}</td>
+                  <td className="text-center space-x-2">
+                    {request.status === "pending" && (
+                      <>
+                        <button
+                          onClick={() => handleAction(request._id, "approved")}
+                          className="btn btn-success btn-sm text-white"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleAction(request._id, "rejected")}
+                          className="btn btn-error btn-sm text-white"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                    {request.status === "approved" &&
+                      request.productType === "Returnable" && (
+                        <button
+                          onClick={() => handleAction(request._id, "returned")}
+                          className="btn btn-warning btn-sm text-white"
+                        >
+                          Return
+                        </button>
+                      )}
+                    {(request.status === "rejected" ||
+                      (request.status === "approved" &&
+                        request.productType === "Non-returnable") ||
+                      request.status === "returned") && (
+                      <button className="btn btn-sm btn-disabled">
+                        Action Taken
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
-      <div className="flex justify-center mt-8 join">
-        <button
-          onClick={() => setPage(page > 0 ? page - 1 : 0)}
-          className="join-item btn"
-        >
-          «
-        </button>
-        <button className="join-item btn">Page {page + 1}</button>
-        <button
-          onClick={() => setPage(page + 1)}
-          className="join-item btn"
-          disabled={items.length < 10}
-        >
-          »
-        </button>
-      </div>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page === 0}
+            className="btn btn-ghost"
+          >
+            Previous
+          </button>
+          <span className="btn btn-ghost mx-2">
+            Page {page + 1} of {totalPages}
+          </span>
+          <button
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page === totalPages - 1}
+            className="btn btn-ghost"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };

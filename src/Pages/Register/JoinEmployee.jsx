@@ -1,134 +1,162 @@
 import { useContext } from "react";
+import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../Providers/AuthProvider";
-import Swal from "sweetalert2";
 import axios from "axios";
+import Swal from "sweetalert2";
+import { FaGoogle } from "react-icons/fa";
 
 const JoinEmployee = () => {
-  const { createUser, updateUserProfile } = useContext(AuthContext);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
+  const { createUser, updateUserProfile, googleSignIn } =
+    useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const name = form.name.value;
-    const email = form.email.value;
-    const password = form.password.value;
-    const dob = form.dob.value;
-
-    // Password validation (min 6 chars)
-    if (password.length < 6) {
-      Swal.fire("Error", "Password must be at least 6 characters", "error");
-      return;
-    }
-
-    try {
-      // 1. Create User in Firebase
-      const result = await createUser(email, password);
-      const user = result.user;
-
-      // 2. Update Profile (Name)
-      await updateUserProfile(name);
-
-      // 3. Prepare data for Database
-      const userInfo = {
-        name: name,
-        email: email,
-        role: "employee",
-        dateOfBirth: dob,
-        createAt: new Date(),
-      };
-
-      // 4. Save to Database
-      // Note: server is not running yet, so this might fail until backend is ready
-      await axios.post("http://localhost:5000/users", userInfo);
-
-      Swal.fire({
-        title: "Success!",
-        text: "Welcome to the team! Registration successful.",
-        icon: "success",
-        confirmButtonText: "Go to Dashboard",
+  const onSubmit = (data) => {
+    createUser(data.email, data.password)
+      .then((result) => {
+        updateUserProfile(
+          data.name,
+          "https://i.ibb.co/mJRkLW9/avatar.png"
+        ).then(() => {
+          const userInfo = {
+            name: data.name,
+            email: data.email,
+            role: "employee",
+            dateOfBirth: data.dateOfBirth,
+          };
+          axios.post("http://localhost:5000/users", userInfo).then((res) => {
+            if (res.data.insertedId) {
+              reset();
+              Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Employee Account created successfully.",
+                showConfirmButton: false,
+                timer: 1500,
+              });
+              navigate("/my-assets");
+            }
+          });
+        });
+      })
+      .catch((error) => {
+        Swal.fire({
+          icon: "error",
+          title: "Registration Failed",
+          text: error.message,
+        });
       });
-      navigate("/");
-    } catch (error) {
-      console.error(error);
-      Swal.fire({
-        title: "Error!",
-        text: error.message,
-        icon: "error",
-        confirmButtonText: "Try Again",
-      });
-    }
+  };
+
+  const handleGoogleRegister = () => {
+    googleSignIn()
+      .then((result) => {
+        const userInfo = {
+          name: result.user.displayName,
+          email: result.user.email,
+          role: "employee",
+          dateOfBirth: "", // Will need to update in profile later
+          photo: result.user.photoURL,
+        };
+        axios.post("http://localhost:5000/users", userInfo).then(() => {
+          Swal.fire(
+            "Success",
+            "Employee Account created with Google!",
+            "success"
+          );
+          navigate("/my-assets");
+        });
+      })
+      .catch((error) => console.log(error));
   };
 
   return (
-    <div className="hero min-h-screen bg-base-200 py-10">
+    <div className="hero min-h-screen bg-base-200">
       <div className="hero-content flex-col lg:flex-row-reverse">
         <div className="text-center lg:text-left">
           <h1 className="text-5xl font-bold">Join as Employee</h1>
-          <p className="py-6">
-            Register to manage your assets and track your equipment.
-          </p>
+          <p className="py-6">Join your team and request assets.</p>
         </div>
         <div className="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
-          <form onSubmit={handleRegister} className="card-body">
+          <form onSubmit={handleSubmit(onSubmit)} className="card-body">
+            {/* Form Inputs */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text">Full Name</span>
               </label>
               <input
-                name="name"
                 type="text"
-                placeholder="Full Name"
+                {...register("name", { required: true })}
                 className="input input-bordered"
-                required
               />
+              {errors.name && (
+                <span className="text-red-600">Name is required</span>
+              )}
             </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Email</span>
-              </label>
-              <input
-                name="email"
-                type="email"
-                placeholder="email"
-                className="input input-bordered"
-                required
-              />
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Password</span>
-              </label>
-              <input
-                name="password"
-                type="password"
-                placeholder="password"
-                className="input input-bordered"
-                required
-              />
-            </div>
-
             <div className="form-control">
               <label className="label">
                 <span className="label-text">Date of Birth</span>
               </label>
               <input
-                name="dob"
                 type="date"
+                {...register("dateOfBirth", { required: true })}
                 className="input input-bordered"
-                required
               />
+              {errors.dateOfBirth && (
+                <span className="text-red-600">Date of Birth is required</span>
+              )}
+            </div>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Email</span>
+              </label>
+              <input
+                type="email"
+                {...register("email", { required: true })}
+                className="input input-bordered"
+              />
+              {errors.email && (
+                <span className="text-red-600">Email is required</span>
+              )}
+            </div>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Password</span>
+              </label>
+              <input
+                type="password"
+                {...register("password", { required: true, minLength: 6 })}
+                className="input input-bordered"
+              />
+              {errors.password && (
+                <span className="text-red-600">
+                  Password must be 6 characters
+                </span>
+              )}
+            </div>
+            <div className="form-control mt-6">
+              <button className="btn btn-primary">Sign Up</button>
             </div>
 
-            <div className="form-control mt-6">
-              <button className="btn btn-primary">Register</button>
-            </div>
-            <p className="text-center mt-4">
+            {/* Google Button */}
+            <div className="divider">OR</div>
+            <button
+              type="button"
+              onClick={handleGoogleRegister}
+              className="btn btn-outline w-full"
+            >
+              <FaGoogle /> Join with Google
+            </button>
+
+            <p className="mt-4 text-center">
               Already have an account?{" "}
-              <Link to="/login" className="link link-primary">
+              <Link to="/login" className="text-blue-600">
                 Login
               </Link>
             </p>

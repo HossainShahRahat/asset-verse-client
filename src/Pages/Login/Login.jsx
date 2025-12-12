@@ -12,18 +12,26 @@ const Login = () => {
   const from = location.state?.from?.pathname || "/";
 
   const handleNavigation = (email) => {
-    axios
-      .get(`http://localhost:5000/user/${email}`)
-      .then((res) => {
-        if (res.data.role === "hr") {
-          navigate("/asset-list", { replace: true });
-        } else {
-          navigate("/my-assets", { replace: true });
-        }
-      })
-      .catch(() => {
-        navigate(from, { replace: true });
-      });
+    // FIX: Add a small delay to ensure the Token is saved in LocalStorage first
+    setTimeout(() => {
+      axios
+        .get(`http://localhost:5000/user/${email}`, {
+          headers: {
+            authorization: `Bearer ${localStorage.getItem("access-token")}`,
+          },
+        })
+        .then((res) => {
+          if (res.data.role === "hr") {
+            navigate("/asset-list", { replace: true });
+          } else {
+            navigate("/my-assets", { replace: true });
+          }
+        })
+        .catch(() => {
+          // If checking role fails, just go to home or previous page
+          navigate(from, { replace: true });
+        });
+    }, 500); // 500ms delay
   };
 
   const handleLogin = (e) => {
@@ -48,7 +56,7 @@ const Login = () => {
         const userInfo = {
           email: result.user.email,
           name: result.user.displayName,
-          role: "employee",
+          role: "employee", // Default role for Google Login
           photo: result.user.photoURL,
         };
         axios.post("http://localhost:5000/users", userInfo).then(() => {
@@ -102,7 +110,6 @@ const Login = () => {
               <FaGoogle /> Continue with Google
             </button>
 
-            {/* UPDATED SECTION: Join Links */}
             <div className="mt-4 text-center text-sm">
               <p>New here?</p>
               <div className="flex justify-center gap-2 mt-1">

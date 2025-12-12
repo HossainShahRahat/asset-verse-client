@@ -1,45 +1,50 @@
-import { useEffect, useState, useContext } from "react";
-import { AuthContext } from "../../../Providers/AuthProvider";
+import { useState, useEffect, useContext } from "react";
 import axios from "axios";
+import { AuthContext } from "../../../Providers/AuthProvider";
+import { FaUserTimes } from "react-icons/fa";
 import Swal from "sweetalert2";
-import { FaTrashAlt } from "react-icons/fa";
 
 const MyEmployeeList = () => {
   const { user } = useContext(AuthContext);
-  const [team, setTeam] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const getTeam = async () => {
-      if (user?.email) {
-        try {
-          const res = await axios.get(
-            `http://localhost:5000/my-team/${user.email}`,
-            {
-              headers: {
-                authorization: `Bearer ${localStorage.getItem("access-token")}`,
-              },
-            }
-          );
-          setTeam(res.data);
-          setLoading(false);
-        } catch (error) {
-          console.log(error);
-          setLoading(false);
+  const fetchEmployees = async () => {
+    if (!user?.email) return;
+    try {
+      setLoading(true);
+      const res = await axios.get(
+        `http://localhost:5000/my-team/${user.email}`,
+        {
+          headers: {
+            authorization: `Bearer ${localStorage.getItem("access-token")}`,
+          },
         }
-      }
-    };
-    getTeam();
+      );
+      const teamMembers = res.data.filter(
+        (member) => member.employeeEmail !== user.email
+      );
+      setEmployees(teamMembers);
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployees();
   }, [user]);
 
-  const remove = (id) => {
+  const handleRemoveEmployee = (id, name) => {
     Swal.fire({
-      title: "Remove member?",
-      text: "This will remove them from your team",
+      title: "Are you sure?",
+      text: `You are about to remove ${name} from your team.`,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      confirmButtonText: "Yes, remove",
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, remove them!",
     }).then((result) => {
       if (result.isConfirmed) {
         axios
@@ -50,78 +55,69 @@ const MyEmployeeList = () => {
           })
           .then((res) => {
             if (res.data.deletedCount > 0) {
-              Swal.fire("Removed!", "Member has been removed.", "success");
-              const remaining = team.filter((member) => member._id !== id);
-              setTeam(remaining);
+              Swal.fire(
+                "Removed!",
+                `${name} has been removed from the team.`,
+                "success"
+              );
+              fetchEmployees();
             }
+          })
+          .catch((error) => {
+            console.error(error);
+            Swal.fire("Error", "Could not remove employee.", "error");
           });
       }
     });
   };
 
   return (
-    <div className="p-10 bg-base-200 min-h-screen">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold">My Team</h2>
-        <div className="badge badge-lg badge-primary">
-          Total: {team.length} Members
-        </div>
-      </div>
+    <div className="p-10 bg-base-200 min-h-screen text-base-content">
+      <h2 className="text-3xl font-bold mb-8">
+        My Employee List ({employees.length})
+      </h2>
 
       <div className="overflow-x-auto bg-base-100 shadow-xl rounded-xl">
         <table className="table w-full">
           <thead className="bg-neutral text-neutral-content">
             <tr>
-              <th>Image</th>
               <th>Name</th>
-              <th>Type</th>
+              <th>Email</th>
+              <th>Team Role</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="4" className="text-center p-4">
-                  Loading team...
+                <td colSpan="4" className="text-center p-8">
+                  <span className="loading loading-spinner loading-lg text-primary"></span>
                 </td>
               </tr>
-            ) : team.length === 0 ? (
+            ) : employees.length === 0 ? (
               <tr>
-                <td colSpan="4" className="text-center p-4">
-                  No team members found.
+                <td colSpan="4" className="text-center p-8">
+                  No employees have joined your team yet.
                 </td>
               </tr>
             ) : (
-              team.map((member) => (
+              employees.map((member) => (
                 <tr key={member._id} className="hover">
+                  <td className="font-bold">{member.employeeName}</td>
+                  <td>{member.employeeEmail}</td>
                   <td>
-                    <div className="avatar">
-                      <div className="mask mask-squircle w-12 h-12">
-                        <img
-                          src={
-                            member.companyLogo ||
-                            "https://i.ibb.co/mJRkLW9/avatar.png"
-                          }
-                          alt={member.employeeName}
-                        />
-                      </div>
+                    <div className="badge badge-outline badge-info capitalize">
+                      {member.role}
                     </div>
-                  </td>
-                  <td>
-                    <div className="font-bold">{member.employeeName}</div>
-                    <div className="text-sm opacity-50">
-                      {member.employeeEmail}
-                    </div>
-                  </td>
-                  <td>
-                    <span className="badge badge-ghost badge-sm">Employee</span>
                   </td>
                   <td>
                     <button
-                      onClick={() => remove(member._id)}
-                      className="btn btn-error btn-sm text-white"
+                      onClick={() =>
+                        handleRemoveEmployee(member._id, member.employeeName)
+                      }
+                      className="btn btn-sm btn-error text-white"
                     >
-                      <FaTrashAlt /> Remove
+                      <FaUserTimes /> Remove
                     </button>
                   </td>
                 </tr>

@@ -57,6 +57,13 @@ const MyAssets = () => {
               const remaining = items.filter((item) => item._id !== id);
               setItems(remaining);
             }
+          })
+          .catch((error) => {
+            if (error.response && error.response.status === 403) {
+              Swal.fire("Forbidden", error.response.data.message, "error");
+            } else {
+              Swal.fire("Error", "Could not cancel request.", "error");
+            }
           });
       }
     });
@@ -76,6 +83,9 @@ const MyAssets = () => {
         const info = {
           status: "returned",
           assetId: item.assetId,
+          // Sending necessary info for server patch security check
+          requesterEmail: user.email,
+          hrEmail: item.hrEmail,
         };
 
         axios
@@ -94,6 +104,17 @@ const MyAssets = () => {
                 return i;
               });
               setItems(updated);
+            }
+          })
+          .catch((error) => {
+            if (error.response && error.response.status === 403) {
+              Swal.fire(
+                "Forbidden",
+                "You are not authorized to return this asset.",
+                "error"
+              );
+            } else {
+              Swal.fire("Error", "Could not process return.", "error");
             }
           });
       }
@@ -151,6 +172,7 @@ const MyAssets = () => {
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="returned">Returned</option>
+          <option value="rejected">Rejected</option>
         </select>
       </div>
 
@@ -158,6 +180,7 @@ const MyAssets = () => {
         <table className="table w-full">
           <thead className="bg-neutral text-neutral-content">
             <tr>
+              <th>Image</th> {/* Added image header */}
               <th>Asset Name</th>
               <th>Type</th>
               <th>Request Date</th>
@@ -169,19 +192,33 @@ const MyAssets = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="6" className="text-center p-4">
+                <td colSpan="7" className="text-center p-4">
                   Loading...
                 </td>
               </tr>
             ) : displayedItems.length === 0 ? (
               <tr>
-                <td colSpan="6" className="text-center p-4">
+                <td colSpan="7" className="text-center p-4">
                   No assets found
                 </td>
               </tr>
             ) : (
               displayedItems.map((item) => (
                 <tr key={item._id} className="hover">
+                  <td>
+                    {/* Image rendering fix */}
+                    <div className="avatar">
+                      <div className="mask mask-squircle w-12 h-12">
+                        <img
+                          src={
+                            item.assetImage ||
+                            "https://img.icons8.com/color/48/no-image.png"
+                          }
+                          alt={item.assetName}
+                        />
+                      </div>
+                    </div>
+                  </td>
                   <td className="font-bold">{item.assetName}</td>
                   <td>
                     <span
@@ -237,6 +274,12 @@ const MyAssets = () => {
                           </button>
                         )}
                       </div>
+                    )}
+                    {(item.status === "rejected" ||
+                      item.status === "returned") && (
+                      <button className="btn btn-sm btn-disabled">
+                        No Action
+                      </button>
                     )}
                   </td>
                 </tr>

@@ -1,9 +1,11 @@
 import { useContext } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { AuthContext } from "../Providers/AuthProvider";
+import useRole from "../Hooks/useRole";
 
 const Navbar = () => {
   const { user, logOut } = useContext(AuthContext);
+  const [role] = useRole();
 
   const handleLogOut = () => {
     logOut()
@@ -28,13 +30,30 @@ const Navbar = () => {
         </>
       )}
 
-      {user && (
+      {user && role === "hr" && (
         <>
           <li>
             <NavLink to="/asset-list">HR Dashboard</NavLink>
           </li>
           <li>
-            <NavLink to="/my-assets">Employee Dashboard</NavLink>
+            <NavLink to="/add-asset">Add Asset</NavLink>
+          </li>
+          <li>
+            <NavLink to="/profile">Profile</NavLink>
+          </li>
+        </>
+      )}
+
+      {user && role === "employee" && (
+        <>
+          <li>
+            <NavLink to="/my-assets">My Assets</NavLink>
+          </li>
+          <li>
+            <NavLink to="/my-team">My Team</NavLink>
+          </li>
+          <li>
+            <NavLink to="/request-asset">Request Asset</NavLink>
           </li>
           <li>
             <NavLink to="/profile">Profile</NavLink>

@@ -1,15 +1,15 @@
-import { useEffect, useState, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../../Providers/AuthProvider";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { FaEdit, FaTrashAlt, FaSearch } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import { FaEdit, FaTrash, FaPlus, FaSearch } from "react-icons/fa";
 
 const AssetList = () => {
   const { user } = useContext(AuthContext);
-  const [items, setItems] = useState([]);
+  const [assets, setAssets] = useState([]);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("");
-  const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,14 +18,14 @@ const AssetList = () => {
         setLoading(true);
         try {
           const res = await axios.get(
-            `http://localhost:5000/assets?email=${user.email}&search=${search}&sort=${sort}&page=${page}&limit=10`,
+            `http://localhost:5000/assets?email=${user.email}&search=${search}&sort=${sort}`,
             {
               headers: {
                 authorization: `Bearer ${localStorage.getItem("access-token")}`,
               },
             }
           );
-          setItems(res.data);
+          setAssets(res.data);
           setLoading(false);
         } catch (error) {
           console.log(error);
@@ -34,14 +34,16 @@ const AssetList = () => {
       }
     };
     getData();
-  }, [user, search, sort, page]);
+  }, [user, search, sort]);
 
-  const remove = (id) => {
+  const handleDelete = (id) => {
     Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
       icon: "warning",
       showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
       confirmButtonText: "Yes, delete it!",
     }).then((result) => {
       if (result.isConfirmed) {
@@ -53,9 +55,9 @@ const AssetList = () => {
           })
           .then((res) => {
             if (res.data.deletedCount > 0) {
-              Swal.fire("Deleted!", "Item has been deleted.", "success");
-              const remaining = items.filter((item) => item._id !== id);
-              setItems(remaining);
+              Swal.fire("Deleted!", "Your asset has been deleted.", "success");
+              const remaining = assets.filter((item) => item._id !== id);
+              setAssets(remaining);
             }
           });
       }
@@ -64,34 +66,39 @@ const AssetList = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    const text = e.target.search.value;
-    setSearch(text);
-    setPage(0);
+    setSearch(e.target.search.value);
   };
 
   return (
     <div className="p-10 bg-base-200 min-h-screen">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <h2 className="text-3xl font-bold">Asset List</h2>
 
-        <div className="flex gap-4">
-          <form onSubmit={handleSearch} className="join">
-            <input
-              type="text"
-              name="search"
-              placeholder="Search product..."
-              className="input input-bordered join-item"
-            />
-            <button className="btn btn-primary join-item">
-              <FaSearch />
-            </button>
-          </form>
+        <Link to="/add-asset" className="btn btn-primary">
+          <FaPlus /> Add New Asset
+        </Link>
+      </div>
 
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-base-100 p-4 rounded-xl shadow-sm">
+        <form onSubmit={handleSearch} className="join w-full md:w-auto">
+          <input
+            type="text"
+            name="search"
+            placeholder="Search assets..."
+            className="input input-bordered join-item w-full md:w-64"
+          />
+          <button className="btn btn-neutral join-item">
+            <FaSearch />
+          </button>
+        </form>
+
+        <div className="flex items-center gap-2">
+          <span className="font-semibold">Sort by Quantity:</span>
           <select
             onChange={(e) => setSort(e.target.value)}
             className="select select-bordered"
           >
-            <option value="">Sort by Quantity</option>
+            <option value="">Default</option>
             <option value="asc">Low to High</option>
             <option value="desc">High to Low</option>
           </select>
@@ -102,7 +109,7 @@ const AssetList = () => {
         <table className="table w-full">
           <thead className="bg-neutral text-neutral-content">
             <tr>
-              <th>Product</th>
+              <th>Product Name</th>
               <th>Type</th>
               <th>Quantity</th>
               <th>Date Added</th>
@@ -116,19 +123,16 @@ const AssetList = () => {
                   Loading...
                 </td>
               </tr>
+            ) : assets.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="text-center p-4">
+                  No assets found
+                </td>
+              </tr>
             ) : (
-              items.map((item) => (
+              assets.map((item) => (
                 <tr key={item._id} className="hover">
-                  <td>
-                    <div className="flex items-center gap-3">
-                      <div className="avatar">
-                        <div className="w-12 h-12 rounded-xl">
-                          <img src={item.productImage} alt="product" />
-                        </div>
-                      </div>
-                      <div className="font-bold">{item.productName}</div>
-                    </div>
-                  </td>
+                  <td className="font-bold">{item.productName}</td>
                   <td>
                     <span
                       className={`badge ${
@@ -142,46 +146,30 @@ const AssetList = () => {
                   </td>
                   <td
                     className={
-                      item.availableQuantity < 5 ? "text-red-500 font-bold" : ""
+                      item.productQuantity < 5 ? "text-red-500 font-bold" : ""
                     }
                   >
-                    {item.availableQuantity}
+                    {item.productQuantity}
                   </td>
                   <td>{new Date(item.dateAdded).toLocaleDateString()}</td>
                   <td>
-                    <button className="btn btn-ghost btn-xs text-info">
-                      <FaEdit />
-                    </button>
-                    <button
-                      onClick={() => remove(item._id)}
-                      className="btn btn-ghost btn-xs text-error"
-                    >
-                      <FaTrashAlt />
-                    </button>
+                    <div className="flex gap-2">
+                      <button className="btn btn-sm btn-square btn-ghost text-blue-600">
+                        <FaEdit />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item._id)}
+                        className="btn btn-sm btn-square btn-ghost text-red-600"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
-      </div>
-
-      <div className="flex justify-center mt-8 join">
-        <button
-          onClick={() => setPage(page > 0 ? page - 1 : 0)}
-          className="join-item btn"
-          disabled={page === 0}
-        >
-          «
-        </button>
-        <button className="join-item btn">Page {page + 1}</button>
-        <button
-          onClick={() => setPage(page + 1)}
-          className="join-item btn"
-          disabled={items.length < 10}
-        >
-          »
-        </button>
       </div>
     </div>
   );

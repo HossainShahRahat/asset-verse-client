@@ -5,6 +5,12 @@ import ErrorPage from "../Pages/ErrorPage/ErrorPage";
 import Login from "../Pages/Login/Login";
 import JoinEmployee from "../Pages/Register/JoinEmployee";
 import JoinHR from "../Pages/Register/JoinHR";
+import AssetList from "../Pages/Dashboard/HR/AssetList";
+import AddAsset from "../Pages/Dashboard/HR/AddAsset";
+import MyAssets from "../Pages/Dashboard/Employee/MyAssets";
+import MyTeam from "../Pages/Dashboard/Employee/MyTeam";
+import RequestAsset from "../Pages/Dashboard/Employee/RequestAsset";
+import Profile from "../Pages/Profile/Profile";
 
 const router = createBrowserRouter([
   {
@@ -27,6 +33,30 @@ const router = createBrowserRouter([
       {
         path: "/login",
         element: <Login />,
+      },
+      {
+        path: "/asset-list",
+        element: <AssetList />,
+      },
+      {
+        path: "/add-asset",
+        element: <AddAsset />,
+      },
+      {
+        path: "/my-assets",
+        element: <MyAssets />,
+      },
+      {
+        path: "/my-team",
+        element: <MyTeam />,
+      },
+      {
+        path: "/request-asset",
+        element: <RequestAsset />,
+      },
+      {
+        path: "/profile",
+        element: <Profile />,
       },
     ],
   },

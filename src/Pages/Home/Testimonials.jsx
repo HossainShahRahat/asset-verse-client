@@ -27,9 +27,12 @@ const Testimonials = () => {
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <div className="flex items-center gap-4 mb-4">
-                <div className="avatar placeholder">
-                  <div className="bg-neutral text-neutral-content rounded-full w-12">
-                    <span>SJ</span>
+                <div className="avatar">
+                  <div className="w-12 rounded-full">
+                    <img
+                      src="https://media.licdn.com/dms/image/v2/D4E03AQERMg186j12oA/profile-displayphoto-scale_200_200/B4EZrohfF.GcAc-/0/1764837685695?e=2147483647&v=beta&t=J5Cu-z9uhTYvh2fvCebE6dfxb9P6P4nsZq2mmxHpcqk"
+                      alt="Sarah Jenkins"
+                    />
                   </div>
                 </div>
                 <div>
@@ -47,9 +50,12 @@ const Testimonials = () => {
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <div className="flex items-center gap-4 mb-4">
-                <div className="avatar placeholder">
-                  <div className="bg-neutral text-neutral-content rounded-full w-12">
-                    <span>MR</span>
+                <div className="avatar">
+                  <div className="w-12 rounded-full">
+                    <img
+                      src="https://media.licdn.com/dms/image/v2/D5603AQHiTHgD1MEoSg/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1701097936797?e=2147483647&v=beta&t=tZPmYF-FaSLIJnNDlXhrO1nuVRlXyG968LtSYQrvJCE"
+                      alt="Michael Ross"
+                    />
                   </div>
                 </div>
                 <div>

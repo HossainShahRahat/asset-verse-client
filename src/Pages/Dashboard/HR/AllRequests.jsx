@@ -115,7 +115,6 @@ const AllRequests = () => {
     page * limit,
     (page + 1) * limit
   );
-  const currentPageRequestsCount = displayedRequests.length;
 
   const handlePageChange = (newPage) => {
     if (newPage >= 0 && newPage < totalPages) {
@@ -187,12 +186,12 @@ const AllRequests = () => {
                   <td>
                     <span
                       className={`badge ${
-                        request.productType === "Returnable"
+                        request.assetType === "Returnable"
                           ? "badge-info"
                           : "badge-secondary"
                       } text-white`}
                     >
-                      {request.productType}
+                      {request.assetType}
                     </span>
                   </td>
                   <td>{request.requesterEmail}</td>
@@ -217,7 +216,7 @@ const AllRequests = () => {
                       </>
                     )}
                     {request.status === "approved" &&
-                      request.productType === "Returnable" && (
+                      request.assetType === "Returnable" && (
                         <button
                           onClick={() => handleAction(request._id, "returned")}
                           className="btn btn-warning btn-sm text-white"
@@ -227,7 +226,7 @@ const AllRequests = () => {
                       )}
                     {(request.status === "rejected" ||
                       (request.status === "approved" &&
-                        request.productType === "Non-returnable") ||
+                        request.assetType === "Non-returnable") ||
                       request.status === "returned") && (
                       <button className="btn btn-sm btn-disabled">
                         Action Taken
@@ -241,7 +240,6 @@ const AllRequests = () => {
         </table>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center mt-6">
           <button

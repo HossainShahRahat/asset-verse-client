@@ -52,9 +52,13 @@ const RequestAsset = () => {
       assetId: asset._id,
       assetName: asset.productName,
       assetType: asset.productType,
+      assetImage: asset.productImage,
       requesterEmail: user.email,
       requesterName: user.displayName,
       requestDate: new Date(),
+      hrEmail: asset.hrEmail,
+      companyName: asset.companyName,
+      companyLogo: asset.companyLogo,
       status: "pending",
     };
 

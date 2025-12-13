@@ -129,8 +129,9 @@ const HRDashboard = () => {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "hsl(var(--b1))",
+                      backgroundColor: "#1f2937",
                       border: "none",
+                      color: "#fff",
                     }}
                   />
                   <Legend />
@@ -149,17 +150,22 @@ const HRDashboard = () => {
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="hsl(var(--bc)/0.1)"
+                    stroke="rgba(255,255,255,0.1)"
                   />
-                  <XAxis dataKey="name" stroke="hsl(var(--bc))" />
-                  <YAxis stroke="hsl(var(--bc))" />
+                  <XAxis
+                    dataKey="name"
+                    stroke="#cbd5e1"
+                    tick={{ fill: "#cbd5e1" }}
+                  />
+                  <YAxis stroke="#cbd5e1" tick={{ fill: "#cbd5e1" }} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "hsl(var(--b1))",
+                      backgroundColor: "#1f2937",
                       border: "none",
+                      color: "#fff",
                     }}
                   />
-                  <Legend />
+                  <Legend wrapperStyle={{ color: "#cbd5e1" }} />
                   <Bar dataKey="Requests" fill="#22C55E" />
                 </BarChart>
               </ResponsiveContainer>

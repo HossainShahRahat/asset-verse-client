@@ -83,7 +83,6 @@ const MyAssets = () => {
         const info = {
           status: "returned",
           assetId: item.assetId,
-          // Sending necessary info for server patch security check
           requesterEmail: user.email,
           hrEmail: item.hrEmail,
         };
@@ -110,7 +109,7 @@ const MyAssets = () => {
             if (error.response && error.response.status === 403) {
               Swal.fire(
                 "Forbidden",
-                "You are not authorized to return this asset.",
+                error.response.data.message || "Unauthorized",
                 "error"
               );
             } else {
@@ -152,12 +151,12 @@ const MyAssets = () => {
       <h2 className="text-3xl font-bold mb-6">My Assets</h2>
 
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <form onSubmit={handleSearch} className="join">
+        <form onSubmit={handleSearch} className="join w-full md:w-auto">
           <input
             type="text"
             name="search"
             placeholder="Search asset name..."
-            className="input input-bordered join-item"
+            className="input input-bordered join-item w-full md:w-80"
           />
           <button className="btn btn-primary join-item">
             <FaSearch />
@@ -166,7 +165,7 @@ const MyAssets = () => {
 
         <select
           onChange={(e) => setFilter(e.target.value)}
-          className="select select-bordered"
+          className="select select-bordered w-full md:w-auto"
         >
           <option value="">Filter by Status</option>
           <option value="pending">Pending</option>
@@ -176,118 +175,128 @@ const MyAssets = () => {
         </select>
       </div>
 
-      <div className="overflow-x-auto bg-base-100 shadow-xl rounded-xl">
-        <table className="table w-full">
-          <thead className="bg-neutral text-neutral-content">
-            <tr>
-              <th>Image</th> {/* Added image header */}
-              <th>Asset Name</th>
-              <th>Type</th>
-              <th>Request Date</th>
-              <th>Approval Date</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="7" className="text-center p-4">
-                  Loading...
-                </td>
-              </tr>
-            ) : displayedItems.length === 0 ? (
-              <tr>
-                <td colSpan="7" className="text-center p-4">
-                  No assets found
-                </td>
-              </tr>
-            ) : (
-              displayedItems.map((item) => (
-                <tr key={item._id} className="hover">
-                  <td>
-                    {/* Image rendering fix */}
-                    <div className="avatar">
-                      <div className="mask mask-squircle w-12 h-12">
-                        <img
-                          src={
-                            item.assetImage ||
-                            "https://img.icons8.com/color/48/no-image.png"
-                          }
-                          alt={item.assetName}
-                        />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="font-bold">{item.assetName}</td>
-                  <td>
-                    <span
-                      className={`badge ${
-                        item.assetType === "Returnable"
-                          ? "badge-info"
-                          : "badge-ghost"
-                      }`}
-                    >
-                      {item.assetType}
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+        </div>
+      ) : displayedItems.length === 0 ? (
+        <div className="text-center p-10 text-xl font-semibold opacity-70">
+          No assets found
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {displayedItems.map((item) => (
+            <div
+              key={item._id}
+              className="card bg-base-100 shadow-xl border border-base-300"
+            >
+              <figure className="h-48 w-full bg-base-300">
+                <img
+                  src={
+                    item.assetImage ||
+                    "https://img.icons8.com/color/96/no-image.png"
+                  }
+                  alt={item.assetName}
+                  className="h-full w-full object-cover"
+                />
+              </figure>
+              <div className="card-body">
+                <div className="flex justify-between items-start">
+                  <h2 className="card-title text-xl font-bold">
+                    {item.assetName}
+                  </h2>
+                  <span
+                    className={`badge ${
+                      item.assetType === "Returnable"
+                        ? "badge-info"
+                        : "badge-ghost"
+                    }`}
+                  >
+                    {item.assetType}
+                  </span>
+                </div>
+
+                <div className="space-y-2 mt-2 text-sm">
+                  <p className="flex justify-between">
+                    <span className="font-semibold opacity-70">
+                      Request Date:
                     </span>
-                  </td>
-                  <td>{new Date(item.requestDate).toLocaleDateString()}</td>
-                  <td>
-                    {item.actionDate
-                      ? new Date(item.actionDate).toLocaleDateString()
-                      : "-"}
-                  </td>
-                  <td>
+                    <span>
+                      {new Date(item.requestDate).toLocaleDateString()}
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="font-semibold opacity-70">
+                      Approval Date:
+                    </span>
+                    <span>
+                      {item.actionDate
+                        ? new Date(item.actionDate).toLocaleDateString()
+                        : "-"}
+                    </span>
+                  </p>
+                  <p className="flex justify-between items-center">
+                    <span className="font-semibold opacity-70">Status:</span>
                     {item.status === "pending" ? (
-                      <span className="badge badge-warning">Pending</span>
+                      <span className="badge badge-warning badge-sm">
+                        Pending
+                      </span>
                     ) : item.status === "approved" ? (
-                      <span className="badge badge-success">Approved</span>
+                      <span className="badge badge-success badge-sm">
+                        Approved
+                      </span>
                     ) : item.status === "returned" ? (
-                      <span className="badge badge-neutral">Returned</span>
+                      <span className="badge badge-neutral badge-sm">
+                        Returned
+                      </span>
                     ) : (
-                      <span className="badge badge-error">Rejected</span>
+                      <span className="badge badge-error badge-sm">
+                        Rejected
+                      </span>
                     )}
-                  </td>
-                  <td>
-                    {item.status === "pending" && (
+                  </p>
+                </div>
+
+                <div className="card-actions justify-end mt-4">
+                  {item.status === "pending" && (
+                    <button
+                      onClick={() => cancel(item._id)}
+                      className="btn btn-sm btn-error text-white w-full"
+                    >
+                      Cancel Request
+                    </button>
+                  )}
+                  {item.status === "approved" && (
+                    <div className="flex gap-2 w-full">
                       <button
-                        onClick={() => cancel(item._id)}
-                        className="btn btn-sm btn-error text-white"
+                        onClick={() => printDetails(item)}
+                        className="btn btn-sm btn-info text-white flex-1"
+                        title="Print Details"
                       >
-                        Cancel
+                        <FaFilePdf /> Details
                       </button>
-                    )}
-                    {item.status === "approved" && (
-                      <div className="flex gap-2">
+                      {item.assetType === "Returnable" && (
                         <button
-                          onClick={() => printDetails(item)}
-                          className="btn btn-sm btn-info text-white"
+                          onClick={() => returnAsset(item)}
+                          className="btn btn-sm btn-warning flex-1"
                         >
-                          <FaFilePdf />
+                          Return
                         </button>
-                        {item.assetType === "Returnable" && (
-                          <button
-                            onClick={() => returnAsset(item)}
-                            className="btn btn-sm btn-warning"
-                          >
-                            Return
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    {(item.status === "rejected" ||
-                      item.status === "returned") && (
-                      <button className="btn btn-sm btn-disabled">
-                        No Action
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                      )}
+                    </div>
+                  )}
+                  {(item.status === "rejected" ||
+                    item.status === "returned") && (
+                    <button className="btn btn-sm btn-disabled w-full">
+                      No Action Available
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

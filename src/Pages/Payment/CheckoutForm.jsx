@@ -4,7 +4,6 @@ import axios from "axios";
 import { AuthContext } from "../../Providers/AuthProvider";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import { FaCheckCircle } from "react-icons/fa";
 
 const CheckoutForm = ({ price, limit, type }) => {
   const stripe = useStripe();
@@ -12,8 +11,25 @@ const CheckoutForm = ({ price, limit, type }) => {
   const { user } = useContext(AuthContext);
   const [clientSecret, setClientSecret] = useState("");
   const [error, setError] = useState("");
-  const [paymentSuccessful, setPaymentSuccessful] = useState(false);
   const navigate = useNavigate();
+  const [cardColor, setCardColor] = useState("#000000");
+
+  useEffect(() => {
+    const updateThemeColor = () => {
+      const computedStyle = getComputedStyle(document.body);
+      setCardColor(computedStyle.color);
+    };
+
+    updateThemeColor();
+
+    const observer = new MutationObserver(updateThemeColor);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme", "class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (price > 0) {
@@ -27,22 +43,34 @@ const CheckoutForm = ({ price, limit, type }) => {
             },
           }
         )
-        .then((res) => {
-          setClientSecret(res.data.clientSecret);
-        });
+        .then((res) => setClientSecret(res.data.clientSecret));
     }
   }, [price]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!stripe || !elements) return;
+    if (!stripe || !elements) {
+      return;
+    }
 
     const card = elements.getElement(CardElement);
-    if (card === null) return;
 
-    // Temporarily simplified confirmation to resolve 400 Bad Request error
-    // The Payment Element is passed directly for confirmation.
+    if (card == null) {
+      return;
+    }
+
+    const { error, paymentMethod } = await stripe.createPaymentMethod({
+      type: "card",
+      card,
+    });
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setError("");
+    }
+
     const { paymentIntent, error: confirmError } =
       await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
@@ -58,66 +86,40 @@ const CheckoutForm = ({ price, limit, type }) => {
       setError(confirmError.message);
     } else {
       if (paymentIntent.status === "succeeded") {
-        const upgradeInfo = {
-          email: user.email,
-          limit: limit,
-          type: type,
-        };
-
+        const updateInfo = { email: user.email, limit, type };
         axios
-          .patch("http://localhost:5000/users/upgrade", upgradeInfo, {
+          .patch("http://localhost:5000/users/upgrade", updateInfo, {
             headers: {
               authorization: `Bearer ${localStorage.getItem("access-token")}`,
             },
           })
           .then((res) => {
             if (res.data.modifiedCount > 0) {
-              setPaymentSuccessful(true);
-              Swal.fire(
-                "Payment Successful",
-                `You are now on the ${type} plan!`,
-                "success"
-              );
-
-              setTimeout(() => {
-                navigate("/asset-list");
-              }, 1000);
+              Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Payment Successful",
+                showConfirmButton: false,
+                timer: 1500,
+              });
+              navigate("/profile");
             }
           });
       }
     }
   };
 
-  if (paymentSuccessful) {
-    return (
-      <div className="w-full max-w-md mx-auto p-12 bg-base-100 rounded-xl shadow-2xl text-base-content text-center">
-        <FaCheckCircle className="text-success text-6xl mx-auto mb-4" />
-        <h3 className="text-2xl font-bold mb-2 text-success">
-          Purchase Complete!
-        </h3>
-        <p className="text-lg">Welcome to the **{type}** Plan.</p>
-        <p className="text-sm mt-4">Redirecting you to the Dashboard...</p>
-      </div>
-    );
-  }
-
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="w-full max-w-md mx-auto p-8 bg-base-100 rounded-xl shadow-2xl text-base-content"
-    >
-      <h3 className="text-xl font-bold mb-6 text-center">
-        Pay ${price} for {type} Plan
-      </h3>
-      <div className="border p-4 rounded-md mb-6 bg-base-200">
+    <form onSubmit={handleSubmit}>
+      <div className="border border-gray-600 rounded-md p-4 bg-base-100">
         <CardElement
           options={{
             style: {
               base: {
                 fontSize: "16px",
-                color: "#1F2937",
+                color: cardColor,
                 "::placeholder": {
-                  color: "#9CA3AF",
+                  color: "#aab7c4",
                 },
               },
               invalid: {
@@ -127,9 +129,9 @@ const CheckoutForm = ({ price, limit, type }) => {
           }}
         />
       </div>
-      <p className="text-red-600 text-sm mb-4">{error}</p>
+      <p className="text-red-600 mt-2">{error}</p>
       <button
-        className="btn btn-primary w-full"
+        className="btn btn-primary w-full mt-6"
         type="submit"
         disabled={!stripe || !clientSecret}
       >

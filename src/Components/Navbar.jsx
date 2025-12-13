@@ -129,7 +129,7 @@ const Navbar = () => {
         {user ? (
           <div className="dropdown dropdown-end">
             <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-              <div className="w-10 rounded-full">
+              <div className="w-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
                 <img
                   src={
                     user.photoURL || "https://img.icons8.com/color/48/user.png"

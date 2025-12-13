@@ -24,7 +24,8 @@ const AddAsset = () => {
       productImage: image,
       dateAdded: new Date(),
       hrEmail: user?.email,
-      companyName: user?.companyName,
+      companyName: user?.displayName,
+      companyLogo: user?.photoURL,
     };
 
     try {

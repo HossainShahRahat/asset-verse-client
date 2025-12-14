@@ -97,7 +97,7 @@ const UpgradePackage = () => {
   const handleSuccess = async () => {
     try {
       await axios.patch(
-        "http://localhost:5000/users/upgrade",
+        "${import.meta.env.VITE_API_URL}users/upgrade",
         {
           email: user.email,
           limit: selected.limit,

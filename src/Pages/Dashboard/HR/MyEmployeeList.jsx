@@ -14,7 +14,7 @@ const MyEmployeeList = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        `http://localhost:5000/my-team/${user.email}`,
+        `${import.meta.env.VITE_API_URL}my-team/${user.email}`,
         {
           headers: {
             authorization: `Bearer ${localStorage.getItem("access-token")}`,
@@ -48,7 +48,7 @@ const MyEmployeeList = () => {
     }).then((result) => {
       if (result.isConfirmed) {
         axios
-          .delete(`http://localhost:5000/my-team/${id}`, {
+          .delete(`${import.meta.env.VITE_API_URL}my-team/${id}`, {
             headers: {
               authorization: `Bearer ${localStorage.getItem("access-token")}`,
             },

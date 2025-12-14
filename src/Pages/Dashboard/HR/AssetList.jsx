@@ -18,7 +18,9 @@ const AssetList = () => {
         setLoading(true);
         try {
           const res = await axios.get(
-            `http://localhost:5000/assets?email=${user.email}&search=${search}&sort=${sort}`,
+            `${import.meta.env.VITE_API_URL}assets?email=${
+              user.email
+            }&search=${search}&sort=${sort}`,
             {
               headers: {
                 authorization: `Bearer ${localStorage.getItem("access-token")}`,
@@ -48,7 +50,7 @@ const AssetList = () => {
     }).then((result) => {
       if (result.isConfirmed) {
         axios
-          .delete(`http://localhost:5000/assets/${id}`, {
+          .delete(`${import.meta.env.VITE_API_URL}assets/${id}`, {
             headers: {
               authorization: `Bearer ${localStorage.getItem("access-token")}`,
             },

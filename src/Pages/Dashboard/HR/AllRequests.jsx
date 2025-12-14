@@ -19,7 +19,7 @@ const AllRequests = () => {
       setLoading(true);
 
       const res = await axios.get(
-        `http://localhost:5000/hr-requests/${user.email}`,
+        `${import.meta.env.VITE_API_URL}hr-requests/${user.email}`,
         {
           headers: {
             authorization: `Bearer ${localStorage.getItem("access-token")}`,
@@ -66,7 +66,7 @@ const AllRequests = () => {
         };
 
         axios
-          .patch(`http://localhost:5000/requests/${id}`, updateData, {
+          .patch(`${import.meta.env.VITE_API_URL}requests/${id}`, updateData, {
             headers: {
               authorization: `Bearer ${localStorage.getItem("access-token")}`,
             },

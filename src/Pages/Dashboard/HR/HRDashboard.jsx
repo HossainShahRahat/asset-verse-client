@@ -27,12 +27,12 @@ const useHRStats = (email) => {
       try {
         setLoading(true);
         const [statsRes, topRes] = await Promise.all([
-          axios.get(`http://localhost:5000/hr-stats/${email}`, {
+          axios.get(`${import.meta.env.VITE_API_URL}hr-stats/${email}`, {
             headers: {
               authorization: `Bearer ${localStorage.getItem("access-token")}`,
             },
           }),
-          axios.get(`http://localhost:5000/top-requests/${email}`, {
+          axios.get(`${import.meta.env.VITE_API_URL}top-requests/${email}`, {
             headers: {
               authorization: `Bearer ${localStorage.getItem("access-token")}`,
             },

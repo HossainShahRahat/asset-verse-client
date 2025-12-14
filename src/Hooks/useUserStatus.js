@@ -10,7 +10,7 @@ const useUserStatus = () => {
   useEffect(() => {
     if (user?.email) {
       axios
-        .get(`http://localhost:5000/user/${user.email}`, {
+        .get(`${import.meta.env.VITE_API_URL}/user/${user.email}`, {
           headers: {
             authorization: `Bearer ${localStorage.getItem("access-token")}`,
           },

@@ -29,7 +29,7 @@ const AddAsset = () => {
     };
 
     try {
-      await axios.post("${import.meta.env.VITE_API_URL}assets", info, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/assets`, info, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("access-token")}`,
         },

@@ -23,7 +23,7 @@ const Subscription = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/packages")
+      .get(`${import.meta.env.VITE_API_URL}/packages`)
       .then((res) => setPackages(res.data));
   }, []);
 

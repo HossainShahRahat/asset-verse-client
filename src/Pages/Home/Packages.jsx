@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 const Packages = () => {
-  // Default data is kept as initial state so the UI doesn't break before the server is ready
-  const [packages, setPackages] = useState([
+   const [packages, setPackages] = useState([
     {
       name: "Basic",
       price: 5,
@@ -29,9 +28,8 @@ const Packages = () => {
   ]);
 
   useEffect(() => {
-    // Will fetch from backend once running
     axios
-      .get("http://localhost:5000/packages")
+      .get(`${import.meta.env.VITE_API_URL}/packages`)
       .then((res) => {
         setPackages(res.data);
       })

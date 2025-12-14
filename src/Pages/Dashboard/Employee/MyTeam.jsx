@@ -13,7 +13,7 @@ const MyTeam = () => {
         setLoading(true);
         try {
           const res = await axios.get(
-            `http://localhost:5000/my-team/${user.email}`,
+            `${import.meta.env.VITE_API_URL}/my-team/${user.email}`,
             {
               headers: {
                 authorization: `Bearer ${localStorage.getItem("access-token")}`,

@@ -12,10 +12,9 @@ const Login = () => {
   const from = location.state?.from?.pathname || "/";
 
   const handleNavigation = (email) => {
-    // FIX: Add a small delay to ensure the Token is saved in LocalStorage first
     setTimeout(() => {
       axios
-        .get(`http://localhost:5000/user/${email}`, {
+        .get(`${import.meta.env.VITE_API_URL}/user/${email}`, {
           headers: {
             authorization: `Bearer ${localStorage.getItem("access-token")}`,
           },
@@ -28,10 +27,9 @@ const Login = () => {
           }
         })
         .catch(() => {
-          // If checking role fails, just go to home or previous page
           navigate(from, { replace: true });
         });
-    }, 500); // 500ms delay
+    }, 500);
   };
 
   const handleLogin = (e) => {
@@ -56,13 +54,15 @@ const Login = () => {
         const userInfo = {
           email: result.user.email,
           name: result.user.displayName,
-          role: "employee", // Default role for Google Login
+          role: "employee",
           photo: result.user.photoURL,
         };
-        axios.post("http://localhost:5000/users", userInfo).then(() => {
-          Swal.fire("Success", "Google Login Successful", "success");
-          handleNavigation(result.user.email);
-        });
+        axios
+          .post(`${import.meta.env.VITE_API_URL}/users`, userInfo)
+          .then(() => {
+            Swal.fire("Success", "Google Login Successful", "success");
+            handleNavigation(result.user.email);
+          });
       })
       .catch((error) => console.log(error));
   };

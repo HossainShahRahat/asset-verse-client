@@ -35,7 +35,7 @@ const CheckoutForm = ({ price, limit, type }) => {
     if (price > 0) {
       axios
         .post(
-          "http://localhost:5000/create-payment-intent",
+          `${import.meta.env.VITE_API_URL}/create-payment-intent`,
           { price },
           {
             headers: {
@@ -88,7 +88,7 @@ const CheckoutForm = ({ price, limit, type }) => {
       if (paymentIntent.status === "succeeded") {
         const updateInfo = { email: user.email, limit, type };
         axios
-          .patch("http://localhost:5000/users/upgrade", updateInfo, {
+          .patch(`${import.meta.env.VITE_API_URL}/users/upgrade`, updateInfo, {
             headers: {
               authorization: `Bearer ${localStorage.getItem("access-token")}`,
             },

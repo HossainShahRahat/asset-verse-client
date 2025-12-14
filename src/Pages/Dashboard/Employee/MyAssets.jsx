@@ -17,7 +17,9 @@ const MyAssets = () => {
         setLoading(true);
         try {
           const res = await axios.get(
-            `http://localhost:5000/requests?email=${user.email}&search=${search}`,
+            `${import.meta.env.VITE_API_URL}/requests?email=${
+              user.email
+            }&search=${search}`,
             {
               headers: {
                 authorization: `Bearer ${localStorage.getItem("access-token")}`,
@@ -46,7 +48,7 @@ const MyAssets = () => {
     }).then((result) => {
       if (result.isConfirmed) {
         axios
-          .delete(`http://localhost:5000/requests/${id}`, {
+          .delete(`${import.meta.env.VITE_API_URL}/requests/${id}`, {
             headers: {
               authorization: `Bearer ${localStorage.getItem("access-token")}`,
             },
@@ -88,7 +90,7 @@ const MyAssets = () => {
         };
 
         axios
-          .patch(`http://localhost:5000/requests/${item._id}`, info, {
+          .patch(`${import.meta.env.VITE_API_URL}/requests/${item._id}`, info, {
             headers: {
               authorization: `Bearer ${localStorage.getItem("access-token")}`,
             },

@@ -40,11 +40,15 @@ const Profile = () => {
         };
 
         axios
-          .patch("http://localhost:5000/users/upgrade", downgradeInfo, {
-            headers: {
-              authorization: `Bearer ${localStorage.getItem("access-token")}`,
-            },
-          })
+          .patch(
+            `${import.meta.env.VITE_API_URL}/users/upgrade`,
+            downgradeInfo,
+            {
+              headers: {
+                authorization: `Bearer ${localStorage.getItem("access-token")}`,
+              },
+            }
+          )
           .then((res) => {
             if (res.data.modifiedCount > 0) {
               Swal.fire(
@@ -75,7 +79,7 @@ const Profile = () => {
       .then(() => {
         axios
           .patch(
-            `http://localhost:5000/users/profile/${user.email}`,
+            `${import.meta.env.VITE_API_URL}/users/profile/${user.email}`,
             updateData,
             {
               headers: {

@@ -16,16 +16,19 @@ const RequestAsset = () => {
     const getData = async () => {
       try {
         const [assetsRes, requestsRes] = await Promise.all([
-          axios.get(`http://localhost:5000/assets?search=${search}`, {
+          axios.get(`${import.meta.env.VITE_API_URL}/assets?search=${search}`, {
             headers: {
               authorization: `Bearer ${localStorage.getItem("access-token")}`,
             },
           }),
-          axios.get(`http://localhost:5000/requests?email=${user.email}`, {
-            headers: {
-              authorization: `Bearer ${localStorage.getItem("access-token")}`,
-            },
-          }),
+          axios.get(
+            `${import.meta.env.VITE_API_URL}/requests?email=${user.email}`,
+            {
+              headers: {
+                authorization: `Bearer ${localStorage.getItem("access-token")}`,
+              },
+            }
+          ),
         ]);
 
         const availableAssets = assetsRes.data.filter(
@@ -63,7 +66,7 @@ const RequestAsset = () => {
     };
 
     axios
-      .post("http://localhost:5000/requests", requestInfo, {
+      .post(`${import.meta.env.VITE_API_URL}/requests`, requestInfo, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("access-token")}`,
         },

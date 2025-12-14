@@ -30,19 +30,21 @@ const JoinEmployee = () => {
             role: "employee",
             dateOfBirth: data.dateOfBirth,
           };
-          axios.post("http://localhost:5000/users", userInfo).then((res) => {
-            if (res.data.insertedId) {
-              reset();
-              Swal.fire({
-                position: "top-end",
-                icon: "success",
-                title: "Employee Account created successfully.",
-                showConfirmButton: false,
-                timer: 1500,
-              });
-              navigate("/my-assets");
-            }
-          });
+          axios
+            .post(`${import.meta.env.VITE_API_URL}/users`, userInfo)
+            .then((res) => {
+              if (res.data.insertedId) {
+                reset();
+                Swal.fire({
+                  position: "top-end",
+                  icon: "success",
+                  title: "Employee Account created successfully.",
+                  showConfirmButton: false,
+                  timer: 1500,
+                });
+                navigate("/my-assets");
+              }
+            });
         });
       })
       .catch((error) => {
@@ -61,17 +63,19 @@ const JoinEmployee = () => {
           name: result.user.displayName,
           email: result.user.email,
           role: "employee",
-          dateOfBirth: "", // Will need to update in profile later
+          dateOfBirth: "",
           photo: result.user.photoURL,
         };
-        axios.post("http://localhost:5000/users", userInfo).then(() => {
-          Swal.fire(
-            "Success",
-            "Employee Account created with Google!",
-            "success"
-          );
-          navigate("/my-assets");
-        });
+        axios
+          .post(`${import.meta.env.VITE_API_URL}/users`, userInfo)
+          .then(() => {
+            Swal.fire(
+              "Success",
+              "Employee Account created with Google!",
+              "success"
+            );
+            navigate("/my-assets");
+          });
       })
       .catch((error) => console.log(error));
   };
@@ -85,7 +89,6 @@ const JoinEmployee = () => {
         </div>
         <div className="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
           <form onSubmit={handleSubmit(onSubmit)} className="card-body">
-            {/* Form Inputs */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text">Full Name</span>
@@ -144,7 +147,6 @@ const JoinEmployee = () => {
               <button className="btn btn-primary">Sign Up</button>
             </div>
 
-            {/* Google Button */}
             <div className="divider">OR</div>
             <button
               type="button"

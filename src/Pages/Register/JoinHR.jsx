@@ -29,19 +29,21 @@ const JoinHR = () => {
             companyLogo: data.companyLogo,
             package: "basic",
           };
-          axios.post("http://localhost:5000/users", userInfo).then((res) => {
-            if (res.data.insertedId) {
-              reset();
-              Swal.fire({
-                position: "top-end",
-                icon: "success",
-                title: "HR Account created successfully.",
-                showConfirmButton: false,
-                timer: 1500,
-              });
-              navigate("/asset-list");
-            }
-          });
+          axios
+            .post(`${import.meta.env.VITE_API_URL}/users`, userInfo)
+            .then((res) => {
+              if (res.data.insertedId) {
+                reset();
+                Swal.fire({
+                  position: "top-end",
+                  icon: "success",
+                  title: "HR Account created successfully.",
+                  showConfirmButton: false,
+                  timer: 1500,
+                });
+                navigate("/asset-list");
+              }
+            });
         });
       })
       .catch((error) => {
@@ -60,14 +62,16 @@ const JoinHR = () => {
           name: result.user.displayName,
           email: result.user.email,
           role: "hr",
-          companyName: "", // Will need to update in profile later
+          companyName: "",
           companyLogo: result.user.photoURL,
           package: "basic",
         };
-        axios.post("http://localhost:5000/users", userInfo).then(() => {
-          Swal.fire("Success", "HR Account created with Google!", "success");
-          navigate("/asset-list");
-        });
+        axios
+          .post(`${import.meta.env.VITE_API_URL}/users`, userInfo)
+          .then(() => {
+            Swal.fire("Success", "HR Account created with Google!", "success");
+            navigate("/asset-list");
+          });
       })
       .catch((error) => console.log(error));
   };
@@ -81,7 +85,6 @@ const JoinHR = () => {
         </div>
         <div className="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
           <form onSubmit={handleSubmit(onSubmit)} className="card-body">
-            {/* Form Inputs */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text">Full Name</span>
